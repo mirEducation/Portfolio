@@ -12,7 +12,7 @@ function App() {
   })
 
   const infoText = useMemo(() => {
-    if (!selectedFaceData?.category) {
+    if (!selectedFaceData.category) {
       return {
         category: 'Click any cube face',
         label: 'Project labels are mapped per face category.',
@@ -39,7 +39,7 @@ function App() {
       >
         <Scene
           controlsRef={controlsRef}
-          onNodeFaceClick={(selection) => setSelectedFaceData(selection?.faceMetadata ?? { category: null, label: PLACEHOLDER_LABEL })}
+          onNodeFaceClick={(selection) => setSelectedFaceData(selection.faceMetadata)}
         />
       </Canvas>
 

@@ -1,20 +1,5 @@
 import { OrbitControls } from '@react-three/drei'
 import { EffectComposer, N8AO } from '@react-three/postprocessing'
-import { useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import CubeAssembly from './CubeAssembly'
-import useCameraFocus from './useCameraFocus'
-
-const AUTO_ROTATE_IDLE_MS = 5000
-
-function Scene({ controlsRef, onNodeFaceClick }) {
-  const { focusFace, resetFocus } = useCameraFocus(controlsRef)
-  const gl = useThree((state) => state.gl)
-
-  const selectedNodeRef = useRef(null)
-  const lastInteractionRef = useRef(Date.now())
-  const [isInteracting, setIsInteracting] = useState(false)
-  const [autoRotateEnabled, setAutoRotateEnabled] = useState(false)
 import { useMemo } from 'react'
 import CubeAssembly from './CubeAssembly'
 import useCameraFocus from './useCameraFocus'
@@ -36,89 +21,6 @@ function Scene({ controlsRef, onNodeFaceClick }) {
     }),
     []
   )
-
-  const registerInteraction = useCallback(() => {
-    lastInteractionRef.current = Date.now()
-  }, [])
-
-  const clearSelection = useCallback(() => {
-    selectedNodeRef.current = null
-    resetFocus()
-    onNodeFaceClick(null)
-  }, [onNodeFaceClick, resetFocus])
-
-  const handleNodeFaceClick = useCallback(
-    (selection) => {
-      registerInteraction()
-      if (!selection) return
-
-      if (selectedNodeRef.current === selection.nodeIndex) {
-        clearSelection()
-        return
-      }
-
-      selectedNodeRef.current = selection.nodeIndex
-      focusFace(selection)
-      onNodeFaceClick(selection)
-    },
-    [clearSelection, focusFace, onNodeFaceClick, registerInteraction]
-  )
-
-  useEffect(() => {
-    const controls = controlsRef.current
-    if (!controls) return undefined
-
-    const handleControlStart = () => {
-      registerInteraction()
-      setIsInteracting(true)
-    }
-
-    const handleControlEnd = () => {
-      registerInteraction()
-      setIsInteracting(false)
-    }
-
-    controls.addEventListener('start', handleControlStart)
-    controls.addEventListener('end', handleControlEnd)
-
-    return () => {
-      controls.removeEventListener('start', handleControlStart)
-      controls.removeEventListener('end', handleControlEnd)
-    }
-  }, [controlsRef, registerInteraction])
-
-  useEffect(() => {
-    const domElement = gl.domElement
-
-    const handleContextMenu = (event) => {
-      event.preventDefault()
-      registerInteraction()
-      clearSelection()
-    }
-
-    const handleWheel = () => {
-      registerInteraction()
-    }
-
-    domElement.addEventListener('contextmenu', handleContextMenu)
-    domElement.addEventListener('wheel', handleWheel, { passive: true })
-
-    return () => {
-      domElement.removeEventListener('contextmenu', handleContextMenu)
-      domElement.removeEventListener('wheel', handleWheel)
-    }
-  }, [clearSelection, gl, registerInteraction])
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      const isIdle = Date.now() - lastInteractionRef.current > AUTO_ROTATE_IDLE_MS
-      setAutoRotateEnabled(!isInteracting && isIdle)
-    }, 200)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [isInteracting])
 
   return (
     <>
@@ -142,11 +44,6 @@ function Scene({ controlsRef, onNodeFaceClick }) {
       />
       <hemisphereLight intensity={0.35} color="#c7d3ff" groundColor="#16181f" />
 
-      <CubeAssembly
-        onNodeFaceClick={handleNodeFaceClick}
-        onInteraction={registerInteraction}
-        autoRotateEnabled={autoRotateEnabled}
-      />
       <CubeAssembly onNodeFaceClick={handleNodeFaceClick} />
 
       <EffectComposer multisampling={0}>
