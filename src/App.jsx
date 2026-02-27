@@ -1,4 +1,5 @@
 import { Canvas } from '@react-three/fiber'
+import { useRef, useState } from 'react'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { PLACEHOLDER_LABEL } from './data/nodeMetadata'
@@ -10,20 +11,6 @@ function App() {
     category: null,
     label: PLACEHOLDER_LABEL,
   })
-
-  const infoText = useMemo(() => {
-    if (!selectedFaceData.category) {
-      return {
-        category: 'Click any cube face',
-        label: 'Project labels are mapped per face category.',
-      }
-    }
-
-    return {
-      category: selectedFaceData.category,
-      label: selectedFaceData.label,
-    }
-  }, [selectedFaceData])
 
   return (
     <main className="scene-container">
@@ -39,14 +26,20 @@ function App() {
       >
         <Scene
           controlsRef={controlsRef}
-          onNodeFaceClick={(selection) => setSelectedFaceData(selection.faceMetadata)}
+          onNodeFaceClick={(selection) =>
+            setSelectedFaceData(
+              selection?.faceMetadata ?? { category: null, label: PLACEHOLDER_LABEL }
+            )
+          }
         />
       </Canvas>
 
-      <aside className="selection-panel" aria-live="polite">
-        <p className="selection-panel__category">{infoText.category}</p>
-        <p className="selection-panel__label">{infoText.label}</p>
-      </aside>
+      {selectedFaceData?.category ? (
+        <aside className="selection-panel" aria-live="polite">
+          <p className="selection-panel__category">{selectedFaceData.category}</p>
+          <p className="selection-panel__label">{selectedFaceData.label}</p>
+        </aside>
+      ) : null}
     </main>
   )
 }
