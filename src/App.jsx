@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { PLACEHOLDER_LABEL } from './data/nodeMetadata'
 import Scene from './scene/Scene'

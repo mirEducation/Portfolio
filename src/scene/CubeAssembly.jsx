@@ -233,10 +233,6 @@ function CubeAssembly({ onNodeFaceClick, onInteraction, autoRotateEnabled }) {
           material={hoveredNode === index ? hoverMaterial : cubeMaterial}
           castShadow
           receiveShadow
-          onPointerDown={(event) => {
-            event.stopPropagation()
-            onInteraction?.()
-          }}
           onPointerOver={(event) => {
             event.stopPropagation()
             setHoveredNode(index)
