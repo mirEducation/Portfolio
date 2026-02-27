@@ -19,14 +19,14 @@ function useCameraFocus(controlsRef) {
   const focusDistance = useMemo(() => DEFAULT_FOCUS_DISTANCE, [])
 
   const focusFace = useCallback(
-    (point, normal) => {
-      if (!point || !normal) return
+    ({ worldPoint, worldNormal } = {}) => {
+      if (!worldPoint || !worldNormal) return
 
-      const worldPoint = point.clone()
-      const worldNormal = normal.clone().normalize()
+      const targetPoint = worldPoint.clone()
+      const targetNormal = worldNormal.clone().normalize()
 
-      focusTarget.current.controlsTarget.copy(worldPoint)
-      focusTarget.current.cameraPosition.copy(worldPoint).addScaledVector(worldNormal, focusDistance)
+      focusTarget.current.controlsTarget.copy(targetPoint)
+      focusTarget.current.cameraPosition.copy(targetPoint).addScaledVector(targetNormal, focusDistance)
     },
     [focusDistance]
   )
