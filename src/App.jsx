@@ -1,36 +1,8 @@
-import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
+import * as THREE from 'three'
 import { PLACEHOLDER_LABEL } from './data/nodeMetadata'
-import CubeAssembly from './scene/CubeAssembly'
-import useCameraFocus from './scene/useCameraFocus'
-
-function SceneContents({ controlsRef, onNodeFaceClick }) {
-  const { focusFace } = useCameraFocus(controlsRef)
-
-  const handleNodeFaceClick = (selection) => {
-    focusFace(selection)
-    onNodeFaceClick(selection)
-  }
-
-  return (
-    <>
-      <color attach="background" args={['#050816']} />
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[6, 7, 5]} intensity={1.3} color="#ffffff" />
-      <directionalLight position={[-5, -3, -4]} intensity={0.35} color="#b7c4ff" />
-      <CubeAssembly onNodeFaceClick={handleNodeFaceClick} />
-      <OrbitControls
-        ref={controlsRef}
-        enablePan={false}
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={3.2}
-        maxDistance={8.5}
-      />
-    </>
-  )
-}
+import Scene from './scene/Scene'
 
 function App() {
   const controlsRef = useRef(null)
@@ -40,7 +12,7 @@ function App() {
   })
 
   const infoText = useMemo(() => {
-    if (!selectedFaceData.category) {
+    if (!selectedFaceData?.category) {
       return {
         category: 'Click any cube face',
         label: 'Project labels are mapped per face category.',
@@ -55,10 +27,19 @@ function App() {
 
   return (
     <main className="scene-container">
-      <Canvas camera={{ position: [3.8, 3.2, 5.6], fov: 45 }}>
-        <SceneContents
+      <Canvas
+        shadows
+        camera={{ position: [3.8, 3.2, 5.6], fov: 45 }}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
+        onCreated={({ gl }) => {
+          gl.outputColorSpace = THREE.SRGBColorSpace
+          gl.shadowMap.enabled = true
+          gl.shadowMap.type = THREE.PCFSoftShadowMap
+        }}
+      >
+        <Scene
           controlsRef={controlsRef}
-          onNodeFaceClick={(selection) => setSelectedFaceData(selection.faceMetadata)}
+          onNodeFaceClick={(selection) => setSelectedFaceData(selection?.faceMetadata ?? { category: null, label: PLACEHOLDER_LABEL })}
         />
       </Canvas>
 

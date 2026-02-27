@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -14,22 +14,29 @@ function useCameraFocus(controlsRef) {
     controlsTarget: new THREE.Vector3(),
   })
 
+  const defaultTarget = useRef({
+    cameraPosition: camera.position.clone(),
+    controlsTarget: new THREE.Vector3(),
+  })
+
   const initialized = useRef(false)
 
-  const focusDistance = useMemo(() => DEFAULT_FOCUS_DISTANCE, [])
+  const focusFace = useCallback(({ worldPoint, worldNormal } = {}) => {
+    if (!worldPoint || !worldNormal) return
 
-  const focusFace = useCallback(
-    ({ worldPoint, worldNormal } = {}) => {
-      if (!worldPoint || !worldNormal) return
+    const targetPoint = worldPoint.clone()
+    const targetNormal = worldNormal.clone().normalize()
 
-      const targetPoint = worldPoint.clone()
-      const targetNormal = worldNormal.clone().normalize()
+    focusTarget.current.controlsTarget.copy(targetPoint)
+    focusTarget.current.cameraPosition
+      .copy(targetPoint)
+      .addScaledVector(targetNormal, DEFAULT_FOCUS_DISTANCE)
+  }, [])
 
-      focusTarget.current.controlsTarget.copy(targetPoint)
-      focusTarget.current.cameraPosition.copy(targetPoint).addScaledVector(targetNormal, focusDistance)
-    },
-    [focusDistance]
-  )
+  const resetFocus = useCallback(() => {
+    focusTarget.current.controlsTarget.copy(defaultTarget.current.controlsTarget)
+    focusTarget.current.cameraPosition.copy(defaultTarget.current.cameraPosition)
+  }, [])
 
   useFrame((_, delta) => {
     const controls = controlsRef.current
@@ -38,6 +45,8 @@ function useCameraFocus(controlsRef) {
     if (!initialized.current) {
       focusTarget.current.controlsTarget.copy(controls.target)
       focusTarget.current.cameraPosition.copy(camera.position)
+      defaultTarget.current.controlsTarget.copy(controls.target)
+      defaultTarget.current.cameraPosition.copy(camera.position)
       initialized.current = true
     }
 
@@ -49,7 +58,7 @@ function useCameraFocus(controlsRef) {
     controls.update()
   })
 
-  return { focusFace }
+  return { focusFace, resetFocus }
 }
 
 export default useCameraFocus

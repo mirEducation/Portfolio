@@ -87,7 +87,7 @@ const createGlyphGeometry = () => {
   return geometry
 }
 
-function CubeAssembly({ onNodeFaceClick }) {
+function CubeAssembly({ onNodeFaceClick, onInteraction, autoRotateEnabled }) {
   const viewport = useThree((state) => state.viewport)
   const groupRef = useRef(null)
   const [hoveredNode, setHoveredNode] = useState(null)
@@ -199,13 +199,14 @@ function CubeAssembly({ onNodeFaceClick }) {
   }, [glyphMatrices])
 
   useFrame((_, delta) => {
-    if (!groupRef.current) return
+    if (!groupRef.current || !autoRotateEnabled) return
     groupRef.current.rotation.y += delta * 0.28
     groupRef.current.rotation.x += delta * 0.12
   })
 
   const handleNodeClick = (event, nodeIndex) => {
     event.stopPropagation()
+    onInteraction?.()
     if (!onNodeFaceClick || !event.face) return
 
     const worldPoint = event.point.clone()
@@ -230,6 +231,12 @@ function CubeAssembly({ onNodeFaceClick }) {
           position={position}
           geometry={cubeGeometry}
           material={hoveredNode === index ? hoverMaterial : cubeMaterial}
+          castShadow
+          receiveShadow
+          onPointerDown={(event) => {
+            event.stopPropagation()
+            onInteraction?.()
+          }}
           onPointerOver={(event) => {
             event.stopPropagation()
             setHoveredNode(index)
@@ -242,20 +249,35 @@ function CubeAssembly({ onNodeFaceClick }) {
         />
       ))}
 
-      <instancedMesh ref={glyphRef} args={[glyphGeometry, glyphMaterial, glyphMatrices.length]} />
+      <instancedMesh
+        ref={glyphRef}
+        args={[glyphGeometry, glyphMaterial, glyphMatrices.length]}
+        castShadow
+        receiveShadow
+      />
 
-      <mesh geometry={accentGeometry} material={accentMaterials[0]} scale={[1.05, 1, 1]} />
+      <mesh
+        geometry={accentGeometry}
+        material={accentMaterials[0]}
+        scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
+      />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[1]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[2]}
         rotation={[0, Math.PI / 2, 0]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
     </group>
   )
