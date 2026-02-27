@@ -230,6 +230,8 @@ function CubeAssembly({ onNodeFaceClick }) {
           position={position}
           geometry={cubeGeometry}
           material={hoveredNode === index ? hoverMaterial : cubeMaterial}
+          castShadow
+          receiveShadow
           onPointerOver={(event) => {
             event.stopPropagation()
             setHoveredNode(index)
@@ -242,20 +244,35 @@ function CubeAssembly({ onNodeFaceClick }) {
         />
       ))}
 
-      <instancedMesh ref={glyphRef} args={[glyphGeometry, glyphMaterial, glyphMatrices.length]} />
+      <instancedMesh
+        ref={glyphRef}
+        args={[glyphGeometry, glyphMaterial, glyphMatrices.length]}
+        castShadow
+        receiveShadow
+      />
 
-      <mesh geometry={accentGeometry} material={accentMaterials[0]} scale={[1.05, 1, 1]} />
+      <mesh
+        geometry={accentGeometry}
+        material={accentMaterials[0]}
+        scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
+      />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[1]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[2]}
         rotation={[0, Math.PI / 2, 0]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
     </group>
   )
