@@ -241,38 +241,25 @@ function CubeAssembly({
 
   return (
     <group ref={groupRef} scale={groupScale}>
-      {cubePositions.map((position, index) => {
-        const material =
-          selectedNode === index
-            ? selectedMaterial
-            : hoveredNode === index
-              ? hoverMaterial
-              : cubeMaterial
-
-        return (
-          <mesh
-            key={`cube-node-${index}`}
-            position={position}
-            geometry={cubeGeometry}
-            material={material}
-            castShadow
-            receiveShadow
-            onPointerDown={(event) => {
-              event.stopPropagation()
-              onInteraction?.()
-            }}
-            onPointerOver={(event) => {
-              event.stopPropagation()
-              setHoveredNode(index)
-            }}
-            onPointerOut={(event) => {
-              event.stopPropagation()
-              setHoveredNode((prev) => (prev === index ? null : prev))
-            }}
-            onClick={(event) => handleNodeClick(event, index)}
-          />
-        )
-      })}
+      {cubePositions.map((position, index) => (
+        <mesh
+          key={`cube-node-${index}`}
+          position={position}
+          geometry={cubeGeometry}
+          material={hoveredNode === index ? hoverMaterial : cubeMaterial}
+          castShadow
+          receiveShadow
+          onPointerOver={(event) => {
+            event.stopPropagation()
+            setHoveredNode(index)
+          }}
+          onPointerOut={(event) => {
+            event.stopPropagation()
+            setHoveredNode((prev) => (prev === index ? null : prev))
+          }}
+          onClick={(event) => handleNodeClick(event, index)}
+        />
+      ))}
 
       <instancedMesh
         ref={glyphRef}

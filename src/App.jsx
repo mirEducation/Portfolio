@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { PLACEHOLDER_LABEL } from './data/nodeMetadata'
 import Scene from './scene/Scene'
@@ -15,7 +15,7 @@ function App() {
     <main className="scene-container">
       <Canvas
         shadows
-        camera={{ position: [0, 0, 5], fov: 45 }}
+        camera={{ position: [3.8, 3.2, 5.6], fov: 45 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace
