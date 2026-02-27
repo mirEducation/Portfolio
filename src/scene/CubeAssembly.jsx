@@ -87,7 +87,13 @@ const createGlyphGeometry = () => {
   return geometry
 }
 
-function CubeAssembly({ onNodeFaceClick }) {
+function CubeAssembly({
+  onNodeFaceClick,
+  onInteraction,
+  selectedNode,
+  lastInteractionTime,
+  autoRotateDelayMs,
+}) {
   const viewport = useThree((state) => state.viewport)
   const groupRef = useRef(null)
   const [hoveredNode, setHoveredNode] = useState(null)
@@ -124,6 +130,13 @@ function CubeAssembly({ onNodeFaceClick }) {
   const hoverMaterial = useMemo(() => {
     const material = cubeMaterial.clone()
     material.emissiveIntensity = 0.16
+    return material
+  }, [cubeMaterial])
+
+  const selectedMaterial = useMemo(() => {
+    const material = cubeMaterial.clone()
+    material.emissive = new THREE.Color('#acc3ff')
+    material.emissiveIntensity = 0.28
     return material
   }, [cubeMaterial])
 
@@ -199,13 +212,17 @@ function CubeAssembly({ onNodeFaceClick }) {
   }, [glyphMatrices])
 
   useFrame((_, delta) => {
-    if (!groupRef.current) return
+    if (!groupRef.current || !lastInteractionTime?.current) return
+    const isIdle = Date.now() - lastInteractionTime.current > autoRotateDelayMs
+    if (!isIdle) return
+
     groupRef.current.rotation.y += delta * 0.28
     groupRef.current.rotation.x += delta * 0.12
   })
 
   const handleNodeClick = (event, nodeIndex) => {
     event.stopPropagation()
+    onInteraction?.()
     if (!onNodeFaceClick || !event.face) return
 
     const worldPoint = event.point.clone()
@@ -224,38 +241,68 @@ function CubeAssembly({ onNodeFaceClick }) {
 
   return (
     <group ref={groupRef} scale={groupScale}>
-      {cubePositions.map((position, index) => (
-        <mesh
-          key={`cube-node-${index}`}
-          position={position}
-          geometry={cubeGeometry}
-          material={hoveredNode === index ? hoverMaterial : cubeMaterial}
-          onPointerOver={(event) => {
-            event.stopPropagation()
-            setHoveredNode(index)
-          }}
-          onPointerOut={(event) => {
-            event.stopPropagation()
-            setHoveredNode((prev) => (prev === index ? null : prev))
-          }}
-          onClick={(event) => handleNodeClick(event, index)}
-        />
-      ))}
+      {cubePositions.map((position, index) => {
+        const material =
+          selectedNode === index
+            ? selectedMaterial
+            : hoveredNode === index
+              ? hoverMaterial
+              : cubeMaterial
 
-      <instancedMesh ref={glyphRef} args={[glyphGeometry, glyphMaterial, glyphMatrices.length]} />
+        return (
+          <mesh
+            key={`cube-node-${index}`}
+            position={position}
+            geometry={cubeGeometry}
+            material={material}
+            castShadow
+            receiveShadow
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              onInteraction?.()
+            }}
+            onPointerOver={(event) => {
+              event.stopPropagation()
+              setHoveredNode(index)
+            }}
+            onPointerOut={(event) => {
+              event.stopPropagation()
+              setHoveredNode((prev) => (prev === index ? null : prev))
+            }}
+            onClick={(event) => handleNodeClick(event, index)}
+          />
+        )
+      })}
 
-      <mesh geometry={accentGeometry} material={accentMaterials[0]} scale={[1.05, 1, 1]} />
+      <instancedMesh
+        ref={glyphRef}
+        args={[glyphGeometry, glyphMaterial, glyphMatrices.length]}
+        castShadow
+        receiveShadow
+      />
+
+      <mesh
+        geometry={accentGeometry}
+        material={accentMaterials[0]}
+        scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
+      />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[1]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
       <mesh
         geometry={accentGeometry}
         material={accentMaterials[2]}
         rotation={[0, Math.PI / 2, 0]}
         scale={[1.05, 1, 1]}
+        castShadow
+        receiveShadow
       />
     </group>
   )
