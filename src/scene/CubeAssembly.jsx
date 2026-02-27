@@ -1,6 +1,7 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import getResponsiveCubeScale from './getResponsiveCubeScale'
 
 const GRID_SIZE = 3
 const CUBE_SIZE = 0.72
@@ -87,9 +88,14 @@ const createGlyphGeometry = () => {
 }
 
 function CubeAssembly() {
+  const viewport = useThree((state) => state.viewport)
   const groupRef = useRef(null)
   const cubeRef = useRef(null)
   const glyphRef = useRef(null)
+  const groupScale = useMemo(
+    () => getResponsiveCubeScale(viewport.width, viewport.height),
+    [viewport.height, viewport.width]
+  )
 
   const cubeGeometry = useMemo(() => new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE), [])
   const glyphGeometry = useMemo(() => createGlyphGeometry(), [])
@@ -196,7 +202,7 @@ function CubeAssembly() {
   })
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} scale={groupScale}>
       <instancedMesh ref={cubeRef} args={[cubeGeometry, cubeMaterial, cubeMatrices.length]} />
       <instancedMesh ref={glyphRef} args={[glyphGeometry, glyphMaterial, glyphMatrices.length]} />
 
