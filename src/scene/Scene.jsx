@@ -15,6 +15,17 @@ function Scene({ controlsRef, onNodeFaceClick }) {
   const lastInteractionRef = useRef(Date.now())
   const [isInteracting, setIsInteracting] = useState(false)
   const [autoRotateEnabled, setAutoRotateEnabled] = useState(false)
+import { useMemo } from 'react'
+import CubeAssembly from './CubeAssembly'
+import useCameraFocus from './useCameraFocus'
+
+function Scene({ controlsRef, onNodeFaceClick }) {
+  const { focusFace } = useCameraFocus(controlsRef)
+
+  const handleNodeFaceClick = (selection) => {
+    focusFace(selection)
+    onNodeFaceClick(selection)
+  }
 
   const composerOptions = useMemo(
     () => ({
@@ -136,6 +147,7 @@ function Scene({ controlsRef, onNodeFaceClick }) {
         onInteraction={registerInteraction}
         autoRotateEnabled={autoRotateEnabled}
       />
+      <CubeAssembly onNodeFaceClick={handleNodeFaceClick} />
 
       <EffectComposer multisampling={0}>
         <N8AO {...composerOptions} />
