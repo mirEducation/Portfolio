@@ -87,7 +87,7 @@ const createGlyphGeometry = () => {
   return geometry
 }
 
-function CubeAssembly({ onNodeFaceClick, onInteraction, autoRotateEnabled }) {
+function CubeAssembly({ onNodeFaceClick }) {
   const viewport = useThree((state) => state.viewport)
   const groupRef = useRef(null)
   const [hoveredNode, setHoveredNode] = useState(null)
@@ -199,14 +199,13 @@ function CubeAssembly({ onNodeFaceClick, onInteraction, autoRotateEnabled }) {
   }, [glyphMatrices])
 
   useFrame((_, delta) => {
-    if (!groupRef.current || !autoRotateEnabled) return
+    if (!groupRef.current) return
     groupRef.current.rotation.y += delta * 0.28
     groupRef.current.rotation.x += delta * 0.12
   })
 
   const handleNodeClick = (event, nodeIndex) => {
     event.stopPropagation()
-    onInteraction?.()
     if (!onNodeFaceClick || !event.face) return
 
     const worldPoint = event.point.clone()
