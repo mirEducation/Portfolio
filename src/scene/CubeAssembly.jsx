@@ -1,6 +1,7 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { getNodeFaceMetadata } from '../data/nodeMetadata'
 import getResponsiveCubeScale from './getResponsiveCubeScale'
 
 const CUBE_SIZE = 0.72
@@ -208,11 +209,17 @@ function CubeAssembly({ onNodeFaceClick }) {
     if (!onNodeFaceClick || !event.face) return
 
     const worldPoint = event.point.clone()
-    const faceNormal = event.face.normal.clone()
+    const localNormal = event.face.normal.clone()
     const normalMatrix = new THREE.Matrix3().getNormalMatrix(event.object.matrixWorld)
-    const worldNormal = faceNormal.applyMatrix3(normalMatrix).normalize()
+    const worldNormal = localNormal.clone().applyMatrix3(normalMatrix).normalize()
+    const faceMetadata = getNodeFaceMetadata(nodeIndex, localNormal)
 
-    onNodeFaceClick(worldPoint, worldNormal, nodeIndex)
+    onNodeFaceClick({
+      worldPoint,
+      worldNormal,
+      nodeIndex,
+      faceMetadata,
+    })
   }
 
   return (
