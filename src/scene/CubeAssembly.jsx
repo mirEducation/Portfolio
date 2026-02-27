@@ -1,9 +1,8 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import getResponsiveCubeScale from './getResponsiveCubeScale'
 
-const GRID_SIZE = 3
 const CUBE_SIZE = 0.72
 const TARGET_GAP_MM = 2.5
 const REFERENCE_CUBE_MM = 30
@@ -87,11 +86,10 @@ const createGlyphGeometry = () => {
   return geometry
 }
 
-function CubeAssembly() {
+function CubeAssembly({ onNodeFaceClick }) {
   const viewport = useThree((state) => state.viewport)
   const groupRef = useRef(null)
-  const cubeRef = useRef(null)
-  const glyphRef = useRef(null)
+  const [hoveredNode, setHoveredNode] = useState(null)
   const groupScale = useMemo(
     () => getResponsiveCubeScale(viewport.width, viewport.height),
     [viewport.height, viewport.width]
@@ -116,9 +114,17 @@ function CubeAssembly() {
         bumpScale: 0.02,
         normalMap,
         normalScale: new THREE.Vector2(0.25, 0.25),
+        emissive: '#8ea4ff',
+        emissiveIntensity: 0.03,
       }),
     [bumpMap, normalMap]
   )
+
+  const hoverMaterial = useMemo(() => {
+    const material = cubeMaterial.clone()
+    material.emissiveIntensity = 0.16
+    return material
+  }, [cubeMaterial])
 
   const glyphMaterial = useMemo(
     () =>
@@ -139,18 +145,16 @@ function CubeAssembly() {
     []
   )
 
-  const cubeMatrices = useMemo(() => {
-    const matrices = []
+  const cubePositions = useMemo(() => {
+    const positions = []
     for (let x = -1; x <= 1; x += 1) {
       for (let y = -1; y <= 1; y += 1) {
         for (let z = -1; z <= 1; z += 1) {
-          const matrix = new THREE.Matrix4()
-          matrix.setPosition(x * STEP, y * STEP, z * STEP)
-          matrices.push(matrix)
+          positions.push(new THREE.Vector3(x * STEP, y * STEP, z * STEP))
         }
       }
     }
-    return matrices
+    return positions
   }, [])
 
   const glyphMatrices = useMemo(() => {
@@ -185,15 +189,13 @@ function CubeAssembly() {
     return matrices
   }, [])
 
+  const glyphRef = useRef(null)
+
   useLayoutEffect(() => {
-    if (!cubeRef.current || !glyphRef.current) return
-
-    cubeMatrices.forEach((matrix, i) => cubeRef.current.setMatrixAt(i, matrix))
-    cubeRef.current.instanceMatrix.needsUpdate = true
-
+    if (!glyphRef.current) return
     glyphMatrices.forEach((matrix, i) => glyphRef.current.setMatrixAt(i, matrix))
     glyphRef.current.instanceMatrix.needsUpdate = true
-  }, [cubeMatrices, glyphMatrices])
+  }, [glyphMatrices])
 
   useFrame((_, delta) => {
     if (!groupRef.current) return
@@ -201,9 +203,38 @@ function CubeAssembly() {
     groupRef.current.rotation.x += delta * 0.12
   })
 
+  const handleNodeClick = (event, nodeIndex) => {
+    event.stopPropagation()
+    if (!onNodeFaceClick || !event.face) return
+
+    const worldPoint = event.point.clone()
+    const faceNormal = event.face.normal.clone()
+    const normalMatrix = new THREE.Matrix3().getNormalMatrix(event.object.matrixWorld)
+    const worldNormal = faceNormal.applyMatrix3(normalMatrix).normalize()
+
+    onNodeFaceClick(worldPoint, worldNormal, nodeIndex)
+  }
+
   return (
     <group ref={groupRef} scale={groupScale}>
-      <instancedMesh ref={cubeRef} args={[cubeGeometry, cubeMaterial, cubeMatrices.length]} />
+      {cubePositions.map((position, index) => (
+        <mesh
+          key={`cube-node-${index}`}
+          position={position}
+          geometry={cubeGeometry}
+          material={hoveredNode === index ? hoverMaterial : cubeMaterial}
+          onPointerOver={(event) => {
+            event.stopPropagation()
+            setHoveredNode(index)
+          }}
+          onPointerOut={(event) => {
+            event.stopPropagation()
+            setHoveredNode((prev) => (prev === index ? null : prev))
+          }}
+          onClick={(event) => handleNodeClick(event, index)}
+        />
+      ))}
+
       <instancedMesh ref={glyphRef} args={[glyphGeometry, glyphMaterial, glyphMatrices.length]} />
 
       <mesh geometry={accentGeometry} material={accentMaterials[0]} scale={[1.05, 1, 1]} />
